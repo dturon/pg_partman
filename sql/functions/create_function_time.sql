@@ -133,12 +133,15 @@ IF v_type = 'time-static' THEN
         END IF;
 
     END LOOP;
-    v_trig_func := v_trig_func ||' 
+    v_trig_func := v_trig_func ||E' 
             ELSE 
                 RETURN NEW; 
             END IF; 
         END IF; 
         RETURN NULL; 
+        EXCEPTION WHEN OTHERS THEN
+            RAISE WARNING \'pg_partman insert into child failed, row inserted to parent\';
+            RETURN NEW;
         END $t$;';
 
     EXECUTE v_trig_func;
@@ -179,7 +182,7 @@ ELSIF v_type = 'time-dynamic' THEN
                 v_trig_func := v_trig_func||'v_partition_timestamp := date_trunc(''year'', NEW.'||v_control||');';
         END CASE;
         v_trig_func := v_trig_func||'
-            v_partition_name := @extschema@.check_name_length('''||v_parent_tablename||''', '''||v_parent_schema||''', to_char(v_partition_timestamp, '||quote_literal(v_datetime_string)||'), TRUE);
+            v_partition_name := @extschema@.check_name_length('''||v_parent_tablename||''', '''||v_parent_schema||''', to_char(v_partition_timestamp, '||quote_literal(v_datetime_string)||E'), TRUE);
             SELECT count(*) INTO v_count FROM pg_tables WHERE schemaname ||''.''|| tablename = v_partition_name;
             IF v_count > 0 THEN 
                 EXECUTE ''INSERT INTO ''||v_partition_name||'' VALUES($1.*)'' USING NEW;
@@ -189,6 +192,9 @@ ELSIF v_type = 'time-dynamic' THEN
         END IF;
         
         RETURN NULL; 
+        EXCEPTION WHEN OTHERS THEN
+            RAISE WARNING \'pg_partman insert into child failed, row inserted to parent\';
+            RETURN NEW;
         END $t$;';
 
     EXECUTE v_trig_func;
@@ -208,7 +214,7 @@ ELSIF v_type = 'time-custom' THEN
         SELECT child_table INTO v_child_table
         FROM @extschema@.custom_time_partitions 
         WHERE partition_range @> NEW.'||v_control||' 
-        AND parent_table = '||quote_literal(p_parent_table)||';
+        AND parent_table = '||quote_literal(p_parent_table)||E';
 
         SELECT count(*) INTO v_count FROM pg_tables WHERE schemaname ||''.''|| tablename = v_child_table;
         IF v_count > 0 THEN
@@ -217,7 +223,10 @@ ELSIF v_type = 'time-custom' THEN
             RETURN NEW;
         END IF;
 
-        RETURN NULL; 
+        RETURN NULL;
+        EXCEPTION WHEN OTHERS THEN
+            RAISE WARNING \'pg_partman insert into child failed, row inserted to parent\';
+            RETURN NEW; 
         END $t$;';
 
     EXECUTE v_trig_func;

@@ -3,7 +3,7 @@
  * Also appends given suffix and schema if given and truncates the name so that the entire suffix will fit.
  * Returns original name with schema given if it doesn't require truncation
  */
-CREATE FUNCTION check_name_length (p_object_name text, p_object_schema text DEFAULT NULL, p_suffix text DEFAULT NULL, p_table_partition boolean DEFAULT FALSE) RETURNS text
+CREATE FUNCTION check_name_length(p_object_name text, p_object_schema text DEFAULT NULL::text, p_suffix text DEFAULT NULL::text, p_table_partition boolean DEFAULT false, p_prefix text DEFAULT '__'::text) RETURNS text 
     LANGUAGE plpgsql SECURITY DEFINER
     AS $$
 DECLARE
@@ -23,6 +23,8 @@ IF p_table_partition THEN  -- 61 characters to account for _p in partition name
         v_new_name := p_object_schema ||'.'||p_object_name||'_p'||p_suffix;
     END IF;
 ELSE
+    p_object_name := p_prefix||p_object_name; 
+
     IF char_length(p_object_name) + char_length(COALESCE(p_suffix, '')) >= 63 THEN
         v_new_length := 63 - char_length(COALESCE(p_suffix, ''));
         v_new_name := COALESCE(p_object_schema ||'.', '') || substring(p_object_name from 1 for v_new_length) || COALESCE(p_suffix, ''); 

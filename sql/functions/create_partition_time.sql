@@ -1,7 +1,7 @@
 /*
  * Function to create a child table in a time-based partition set
  */
-CREATE FUNCTION create_partition_time (p_parent_table text, p_partition_times timestamp[], p_analyze boolean DEFAULT true) 
+CREATE FUNCTION create_partition_time(p_parent_table text, p_partition_times timestamp[], p_analyze boolean DEFAULT true, p_disable_triggers boolean DEFAULT false)
 RETURNS boolean
     LANGUAGE plpgsql SECURITY DEFINER
     AS $$
@@ -193,6 +193,9 @@ FOREACH v_time IN ARRAY p_partition_times LOOP
     IF v_inherit_fk THEN
         PERFORM @extschema@.apply_foreign_keys(quote_ident(v_parent_schema)||'.'||quote_ident(v_parent_tablename), v_partition_name);
     END IF;
+
+    --copy triggers from parent
+    PERFORM @extschema@.copy_triggers(v_parent_schema||'.'||v_parent_tablename, v_partition_name, p_disable_triggers:=p_disable_triggers);
 
     IF v_jobmon_schema IS NOT NULL THEN
         PERFORM update_step(v_step_id, 'OK', 'Done');

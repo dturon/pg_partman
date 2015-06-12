@@ -32,6 +32,7 @@ v_sub_count             int;
 v_trig_name             text;
 v_total                 bigint := 0;
 v_undo_count            int := 0;
+v_parent_has_triggers   boolean;
 
 BEGIN
 
@@ -53,6 +54,12 @@ AND (type = 'id-static' OR type = 'id-dynamic');
 
 IF v_part_interval IS NULL THEN
     RAISE EXCEPTION 'Configuration for given parent table not found: %', p_parent_table;
+END IF;
+
+SELECT @extschema@.has_parent_triggers(p_parent_table) INTO v_parent_has_triggers;
+IF v_parent_has_triggers THEN
+    -- disable triggers on parent and childs
+    PERFORM @extschema@.disable_triggers(p_parent_table, p_disable_triggers:=True);
 END IF;
 
 -- Check if any child tables are themselves partitioned or part of an inheritance tree. Prevent undo at this level if so.
@@ -243,6 +250,11 @@ END IF;
 IF v_jobmon_schema IS NOT NULL THEN
     PERFORM close_job(v_job_id);
     EXECUTE 'SELECT set_config(''search_path'','''||v_old_search_path||''',''false'')';
+END IF;
+
+IF v_parent_has_triggers THEN
+    -- enable triggers on parent and childs
+    PERFORM @extschema@.disable_triggers(p_parent_table, p_disable_triggers:=False);
 END IF;
 
 RETURN v_total;

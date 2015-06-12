@@ -21,6 +21,7 @@ v_sql                       text;
 v_start_control             bigint;
 v_total_rows                bigint := 0;
 v_type                      text;
+v_parent_has_triggers       boolean;
 
 BEGIN
 
@@ -35,6 +36,12 @@ WHERE parent_table = p_parent_table
 AND (type = 'id-static' OR type = 'id-dynamic');
 IF NOT FOUND THEN
     RAISE EXCEPTION 'ERROR: no config found for %', p_parent_table;
+END IF;
+
+SELECT @extschema@.has_parent_triggers(p_parent_table) INTO v_parent_has_triggers;
+IF v_parent_has_triggers THEN
+    -- disable triggers on parent and childs
+    PERFORM @extschema@.disable_triggers(p_parent_table, p_disable_triggers:=True);
 END IF;
 
 IF p_batch_interval IS NULL OR p_batch_interval > v_part_interval THEN
@@ -98,7 +105,8 @@ FOR i IN 1..p_batch_count LOOP
         END IF;
     END IF;
 
-    PERFORM @extschema@.create_partition_id(p_parent_table, v_partition_id);
+
+    PERFORM @extschema@.create_partition_id(p_parent_table, v_partition_id, p_disable_triggers:=v_parent_has_triggers);
     SELECT schemaname, tablename INTO v_parent_schema, v_parent_tablename FROM pg_catalog.pg_tables WHERE schemaname||'.'||tablename = p_parent_table;
     v_current_partition_name := @extschema@.check_name_length(v_parent_tablename, v_parent_schema, v_min_partition_id::text, TRUE);
 
@@ -114,6 +122,11 @@ FOR i IN 1..p_batch_count LOOP
     END IF;
 
 END LOOP;
+
+IF v_parent_has_triggers THEN
+    -- enable triggers on parent and childs
+    PERFORM @extschema@.disable_triggers(p_parent_table, p_disable_triggers:=False);
+END IF;
 
 IF v_type = 'id-static' THEN
         PERFORM @extschema@.create_function_id(p_parent_table);

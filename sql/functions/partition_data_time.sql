@@ -27,6 +27,7 @@ v_time_position             int;
 v_total_rows                bigint := 0;
 v_type                      text;
 v_year                      text;
+v_parent_has_triggers       boolean;
 
 BEGIN
 
@@ -43,6 +44,12 @@ WHERE parent_table = p_parent_table
 AND (type = 'time-static' OR type = 'time-dynamic' OR type = 'time-custom');
 IF NOT FOUND THEN
     RAISE EXCEPTION 'ERROR: no config found for %', p_parent_table;
+END IF;
+
+SELECT @extschema@.has_parent_triggers(p_parent_table) INTO v_parent_has_triggers;
+IF v_parent_has_triggers THEN
+    -- disable triggers on parent and childs
+    PERFORM @extschema@.disable_triggers(p_parent_table, p_disable_triggers:=True);
 END IF;
 
 IF p_batch_interval IS NULL OR p_batch_interval > v_part_interval THEN
@@ -149,7 +156,7 @@ FOR i IN 1..p_batch_count LOOP
         END IF;
     END IF;
 
-    PERFORM @extschema@.create_partition_time(p_parent_table, v_partition_timestamp);
+    PERFORM @extschema@.create_partition_time(p_parent_table, v_partition_timestamp, p_disable_triggers:=v_parent_has_triggers);
     -- This suffix generation code is in create_partition_time() as well
     v_partition_suffix := to_char(v_min_partition_timestamp, 'YYYY');
     IF v_part_interval < '1 year' AND v_part_interval <> '1 week' THEN 
@@ -189,6 +196,11 @@ FOR i IN 1..p_batch_count LOOP
     END IF;
 
 END LOOP; 
+
+IF v_parent_has_triggers THEN
+    -- enable triggers on parent and childs
+    PERFORM @extschema@.disable_triggers(p_parent_table, p_disable_triggers:=False);
+END IF;
 
 IF v_type = 'time-static' THEN
         PERFORM @extschema@.create_function_time(p_parent_table);

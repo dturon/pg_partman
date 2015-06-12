@@ -186,9 +186,12 @@ IF v_type = 'id-static' THEN
             END IF;';
         END IF;
 
-        v_trig_func := v_trig_func ||'
+        v_trig_func := v_trig_func ||E'
         END IF; 
         RETURN NULL; 
+        EXCEPTION WHEN OTHERS THEN
+            RAISE WARNING \'pg_partman insert into child failed, row inserted to parent\';
+            RETURN NEW;
         END $t$;';
 
     EXECUTE v_trig_func;
@@ -240,9 +243,12 @@ ELSIF v_type = 'id-dynamic' THEN
             END IF;';
         END IF;
 
-        v_trig_func := v_trig_func ||'
+        v_trig_func := v_trig_func ||E'
         END IF;
-        RETURN NULL; 
+        RETURN NULL;
+        EXCEPTION WHEN OTHERS THEN
+            RAISE WARNING \'pg_partman insert into child failed, row inserted to parent\';
+            RETURN NEW; 
         END $t$;';
 
     EXECUTE v_trig_func;
