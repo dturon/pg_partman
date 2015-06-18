@@ -232,7 +232,9 @@ IF p_table_partition THEN  -- 61 characters to account for _p in partition name
         v_new_name := p_object_schema ||'.'||p_object_name||'_p'||p_suffix;
     END IF;
 ELSE
-    p_object_name := p_prefix||p_object_name; 
+    IF p_suffix IS NOT NULL AND p_suffix = '_part_trig_func' THEN
+        p_object_name := p_prefix||p_object_name;
+    END IF 
 
     IF char_length(p_object_name) + char_length(COALESCE(p_suffix, '')) >= 63 THEN
         v_new_length := 63 - char_length(COALESCE(p_suffix, ''));
