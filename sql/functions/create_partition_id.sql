@@ -143,6 +143,10 @@ FOREACH v_id IN ARRAY p_partition_ids LOOP
     --copy triggers from parent
     PERFORM @extschema@.copy_triggers(v_parent_schema||'.'||v_parent_tablename, v_partition_name, p_disable_triggers:=p_disable_triggers);
 
+    --apply cluster from parent
+    PERFORM @extschema@.apply_cluster(v_parent_schema||'.'||v_parent_tablename, v_partition_name);
+
+
     IF v_jobmon_schema IS NOT NULL THEN
         PERFORM update_step(v_step_id, 'OK', 'Done');
     END IF;
