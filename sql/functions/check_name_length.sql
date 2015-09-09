@@ -23,7 +23,7 @@ IF p_table_partition THEN  -- 61 characters to account for _p in partition name
         v_new_name := p_object_schema ||'.'||p_object_name||'_p'||p_suffix;
     END IF;
 ELSE
-    IF p_suffix IS NOT NULL AND p_suffix = '_part_trig_func' THEN
+    IF p_suffix IS NOT NULL AND p_suffix = '_part_trig' THEN
         p_object_name := p_prefix||p_object_name;
     END IF; 
 
