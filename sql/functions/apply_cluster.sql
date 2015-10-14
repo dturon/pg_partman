@@ -30,7 +30,7 @@ BEGIN
             RETURN;
         END IF;
 
-        _cmd = format('CLUSTER %I.%I USING %I', _schema, _child_table, _child_table||substring(_idx_name FROM _parent_table||E'\(.*\)'));
+        _cmd = format('ALTER TABLE %I.%I CLUSTER ON %I', _schema, _child_table, _child_table||substring(_idx_name FROM _parent_table||E'\(.*\)'));
         RAISE DEBUG '%', _cmd;
         EXECUTE _cmd;
 
