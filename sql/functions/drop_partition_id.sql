@@ -121,7 +121,7 @@ END LOOP;
 
 -- Loop through child tables of the given parent
 FOR v_child_table IN 
-    SELECT n.nspname||'.'||c.relname FROM pg_inherits i join pg_class c ON i.inhrelid = c.oid join pg_namespace n ON c.relnamespace = n.oid WHERE i.inhparent::regclass = p_parent_table::regclass ORDER BY i.inhrelid ASC
+    SELECT n.nspname||'.'||c.relname FROM pg_inherits i join pg_class c ON i.inhrelid = c.oid join pg_namespace n ON c.relnamespace = n.oid WHERE i.inhparent::regclass = p_parent_table::regclass  AND c.relkind = 'r' ORDER BY i.inhrelid ASC
 LOOP
     v_id_position := (length(v_child_table) - position('p_' in reverse(v_child_table))) + 2;
     v_partition_id := substring(v_child_table from v_id_position)::bigint;

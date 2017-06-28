@@ -115,7 +115,7 @@ END IF;
 
 -- Loop through child tables of the given parent
 FOR v_child_table IN 
-    SELECT n.nspname||'.'||c.relname FROM pg_inherits i join pg_class c ON i.inhrelid = c.oid join pg_namespace n ON c.relnamespace = n.oid WHERE i.inhparent::regclass = p_parent_table::regclass ORDER BY i.inhrelid ASC
+    SELECT n.nspname||'.'||c.relname FROM pg_inherits i join pg_class c ON i.inhrelid = c.oid join pg_namespace n ON c.relnamespace = n.oid WHERE i.inhparent::regclass = p_parent_table::regclass AND c.relkind = 'r' ORDER BY i.inhrelid ASC
 LOOP
     -- pull out datetime portion of partition's tablename to make the next one
     v_time_position := (length(v_child_table) - position('p_' in reverse(v_child_table))) + 2;

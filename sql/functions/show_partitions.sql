@@ -32,7 +32,7 @@ IF v_type IN ('time-static', 'time-dynamic', 'time-custom') THEN
     pg_catalog.pg_inherits h
     JOIN pg_catalog.pg_class c ON c.oid = h.inhrelid
     JOIN pg_catalog.pg_namespace n ON c.relnamespace = n.oid
-    WHERE h.inhparent = '||quote_literal(p_parent_table)||'::regclass
+    WHERE h.inhparent = '||quote_literal(p_parent_table)||'::regclass AND c.relkind = ''r''
     ORDER BY to_timestamp(substring(c.relname from ((length(c.relname) - position(''p_'' in reverse(c.relname))) + 2) ), '||quote_literal(v_datetime_string)||') ' || p_order;
 
 ELSIF v_type IN ('id-static', 'id-dynamic') THEN
@@ -42,7 +42,7 @@ ELSIF v_type IN ('id-static', 'id-dynamic') THEN
     pg_catalog.pg_inherits h
     JOIN pg_catalog.pg_class c ON c.oid = h.inhrelid
     JOIN pg_catalog.pg_namespace n ON c.relnamespace = n.oid
-    WHERE h.inhparent = '||quote_literal(p_parent_table)||'::regclass
+    WHERE h.inhparent = '||quote_literal(p_parent_table)||'::regclass AND c.relkind = ''r''
     ORDER BY substring(c.relname from ((length(c.relname) - position(''p_'' in reverse(c.relname))) + 2) )::bigint ' || p_order;
 
 END IF;
