@@ -10,7 +10,6 @@ v_all               text[] := ARRAY['SELECT', 'INSERT', 'UPDATE', 'DELETE', 'TRU
 v_analyze           boolean := FALSE;
 v_control           text;
 v_grantees          text[];
-v_hasoids           boolean;
 v_id                bigint;
 v_inherit_fk        boolean;
 v_job_id            bigint;
@@ -97,10 +96,6 @@ FOREACH v_id IN ARRAY p_partition_ids LOOP
         v_sql := v_sql || ' UNLOGGED';
     END IF;
     v_sql := v_sql || ' TABLE '||v_partition_name||' (LIKE '||p_parent_table||' INCLUDING DEFAULTS INCLUDING CONSTRAINTS INCLUDING INDEXES INCLUDING STORAGE INCLUDING COMMENTS)';
-    SELECT relhasoids INTO v_hasoids FROM pg_catalog.pg_class WHERE oid::regclass = p_parent_table::regclass;
-    IF v_hasoids IS TRUE THEN
-        v_sql := v_sql || ' WITH (OIDS)';
-    END IF;
     EXECUTE v_sql;
     SELECT tablename INTO v_tablename FROM pg_catalog.pg_tables WHERE schemaname ||'.'|| tablename = v_partition_name;
     IF v_parent_tablespace IS NOT NULL THEN

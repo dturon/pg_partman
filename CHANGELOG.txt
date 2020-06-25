@@ -1,3 +1,6 @@
+1.8.7-lbox-0.1.5
+-- PG12 remove WITH OIDS
+
 1.8.7-lbox-0.1.4
 -- fix bug when partition doesn't exists, remove analyze
 
